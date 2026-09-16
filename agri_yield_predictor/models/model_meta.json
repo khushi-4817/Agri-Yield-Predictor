@@ -1,0 +1,121 @@
+{
+  "best_model": "RandomForest",
+  "feature_cols": [
+    "Farm_Area_Hectares",
+    "Rainfall_mm",
+    "Avg_Temperature_C",
+    "Humidity_pct",
+    "Sunlight_Hours_Day",
+    "Soil_pH",
+    "Soil_Moisture_pct",
+    "Nitrogen_kg_ha",
+    "Phosphorus_kg_ha",
+    "Potassium_kg_ha",
+    "Fertilizer_kg_ha",
+    "Pesticide_Litre_ha",
+    "Seed_Quality_Score",
+    "Water_Used_m3",
+    "Disease_Pest_Risk_pct",
+    "State",
+    "District",
+    "Crop",
+    "Season",
+    "Irrigation_Method"
+  ],
+  "categorical_cols": [
+    "State",
+    "District",
+    "Crop",
+    "Season",
+    "Irrigation_Method"
+  ],
+  "numeric_features": [
+    "Farm_Area_Hectares",
+    "Rainfall_mm",
+    "Avg_Temperature_C",
+    "Humidity_pct",
+    "Sunlight_Hours_Day",
+    "Soil_pH",
+    "Soil_Moisture_pct",
+    "Nitrogen_kg_ha",
+    "Phosphorus_kg_ha",
+    "Potassium_kg_ha",
+    "Fertilizer_kg_ha",
+    "Pesticide_Litre_ha",
+    "Seed_Quality_Score",
+    "Water_Used_m3",
+    "Disease_Pest_Risk_pct"
+  ],
+  "target": "Yield_Tonnes_Ha",
+  "metrics": {
+    "RandomForest": {
+      "RMSE": 2.1907,
+      "MAE": 0.6172,
+      "R2": 0.9646,
+      "CV_R2": 0.9641
+    },
+    "GradientBoosting": {
+      "RMSE": 2.4207,
+      "MAE": 0.9418,
+      "R2": 0.9567,
+      "CV_R2": 0.953
+    },
+    "Ridge": {
+      "RMSE": 10.7081,
+      "MAE": 5.8911,
+      "R2": 0.1532,
+      "CV_R2": 0.2309
+    },
+    "LinearRegression": {
+      "RMSE": 10.7087,
+      "MAE": 5.8923,
+      "R2": 0.1531,
+      "CV_R2": 0.2308
+    }
+  },
+  "unique_values": {
+    "State": [
+      "Andhra Pradesh",
+      "Gujarat",
+      "Karnataka",
+      "Madhya Pradesh",
+      "Maharashtra",
+      "Punjab",
+      "Tamil Nadu",
+      "Telangana"
+    ],
+    "District": [
+      "Erode",
+      "Guntur",
+      "Indore",
+      "Krishna",
+      "Ludhiana",
+      "Nalgonda",
+      "Nashik",
+      "Raichur",
+      "Rajkot",
+      "Warangal"
+    ],
+    "Crop": [
+      "Chilli",
+      "Cotton",
+      "Groundnut",
+      "Maize",
+      "Pulses",
+      "Rice",
+      "Sugarcane",
+      "Wheat"
+    ],
+    "Season": [
+      "Kharif",
+      "Rabi",
+      "Zaid"
+    ],
+    "Irrigation_Method": [
+      "Drip",
+      "Flood",
+      "Rainfed",
+      "Sprinkler"
+    ]
+  }
+}

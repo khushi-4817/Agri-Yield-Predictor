@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgriYield — Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset ───────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;background:#0f172a;color:#e2e8f0;font-size:14px;line-height:1.6;min-height:100vh}
+
+    /* ── Layout ──────────────────────────────────── */
+    .shell{display:flex;min-height:100vh}
+
+    /* ── Sidebar ─────────────────────────────────── */
+    .sidebar{width:220px;background:#1e293b;border-right:1px solid #334155;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0}
+    .sidebar-brand{padding:1.25rem 1rem;border-bottom:1px solid #334155}
+    .sidebar-brand .logo{font-size:1.1rem;font-weight:800;color:#4ade80;letter-spacing:.5px}
+    .sidebar-brand .sub{font-size:.7rem;color:#64748b;margin-top:.1rem}
+    .sidebar-nav{padding:.75rem 0;flex:1}
+    .nav-section{padding:.3rem 1rem .2rem;font-size:.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px}
+    .nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1rem;cursor:pointer;color:#94a3b8;font-size:.85rem;border-left:3px solid transparent;transition:all .15s}
+    .nav-item:hover{background:#273549;color:#e2e8f0}
+    .nav-item.active{background:#1a3a2a;color:#4ade80;border-left-color:#4ade80}
+    .nav-item .icon{font-size:1rem;width:20px;text-align:center}
+    .sidebar-footer{padding:.75rem 1rem;border-top:1px solid #334155;font-size:.7rem;color:#475569}
+    .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-right:.35rem;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ── Main ────────────────────────────────────── */
+    .main{flex:1;overflow-x:hidden}
+
+    /* ── Topbar ──────────────────────────────────── */
+    .topbar{background:#1e293b;border-bottom:1px solid #334155;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .topbar-title{font-size:1rem;font-weight:700;color:#f1f5f9}
+    .topbar-right{display:flex;align-items:center;gap:.75rem}
+    .badge{padding:.2rem .65rem;border-radius:20px;font-size:.7rem;font-weight:700}
+    .badge-green{background:#14532d;color:#4ade80}
+    .badge-blue{background:#1e3a5f;color:#60a5fa}
+    .refresh-btn{background:#334155;border:none;color:#94a3b8;padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-size:.8rem;transition:all .15s}
+    .refresh-btn:hover{background:#4ade80;color:#0f172a}
+
+    /* ── Content ─────────────────────────────────── */
+    .content{padding:1.5rem;display:none}
+    .content.active{display:block}
+
+    /* ── KPI row ─────────────────────────────────── */
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+    .kpi{background:#1e293b;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid #334155;position:relative;overflow:hidden}
+    .kpi::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
+    .kpi.green::before{background:#4ade80}
+    .kpi.blue::before{background:#60a5fa}
+    .kpi.purple::before{background:#a78bfa}
+    .kpi.amber::before{background:#fbbf24}
+    .kpi.teal::before{background:#2dd4bf}
+    .kpi-label{font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem}
+    .kpi-value{font-size:1.9rem;font-weight:800;color:#f1f5f9;line-height:1}
+    .kpi-sub{font-size:.72rem;color:#64748b;margin-top:.3rem}
+    .kpi-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:2rem;opacity:.15}
+
+    /* ── Section titles ──────────────────────────── */
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .section-title{font-size:.95rem;font-weight:700;color:#f1f5f9}
+    .section-sub{font-size:.75rem;color:#64748b;margin-top:.1rem}
+
+    /* ── Chart grid ──────────────────────────────── */
+    .chart-grid{display:grid;gap:1rem;margin-bottom:1.5rem}
+    .chart-grid.cols-2{grid-template-columns:1fr 1fr}
+    .chart-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+    .chart-grid.cols-1{grid-template-columns:1fr}
+    .chart-card{background:#1e293b;border-radius:12px;padding:1.25rem;border:1px solid #334155}
+    .chart-card .chart-title{font-size:.85rem;font-weight:700;color:#cbd5e1;margin-bottom:.1rem}
+    .chart-card .chart-desc{font-size:.72rem;color:#475569;margin-bottom:.85rem}
+    .chart-wrap{position:relative}
+
+    /* ── Table ───────────────────────────────────── */
+    .table-card{background:#1e293b;border-radius:12px;border:1px solid #334155;overflow:hidden;margin-bottom:1.5rem}
+    .table-header{padding:.9rem 1.25rem;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between}
+    .table-header .t-title{font-size:.85rem;font-weight:700;color:#cbd5e1}
+    .table-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th{background:#273549;padding:.55rem 1rem;text-align:left;font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+    td{padding:.55rem 1rem;font-size:.82rem;border-bottom:1px solid #1e293b;white-space:nowrap;color:#cbd5e1}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#273549}
+    .tag{display:inline-block;padding:.1rem .5rem;border-radius:6px;font-size:.7rem;font-weight:700}
+    .tag-green{background:#14532d;color:#4ade80}
+    .tag-blue{background:#1e3a5f;color:#60a5fa}
+    .tag-purple{background:#2e1065;color:#a78bfa}
+    .tag-amber{background:#451a03;color:#fbbf24}
+
+    /* ── Metric cards ────────────────────────────── */
+    .metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
+    .metric-card{background:#1e293b;border-radius:12px;padding:1.25rem;border:1px solid #334155}
+    .metric-card.best{border-color:#fbbf24;box-shadow:0 0 0 1px #fbbf2433}
+    .metric-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+    .metric-model{font-size:.9rem;font-weight:700;color:#f1f5f9}
+    .metric-rows{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+    .metric-pill{background:#273549;border-radius:8px;padding:.4rem .7rem;display:flex;justify-content:space-between;align-items:center}
+    .metric-pill .m-key{font-size:.7rem;color:#64748b;font-weight:600;text-transform:uppercase}
+    .metric-pill .m-val{font-size:.85rem;font-weight:800;color:#f1f5f9}
+    .metric-pill.highlight .m-val{color:#4ade80}
+
+    /* ── Progress bar ────────────────────────────── */
+    .prog-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+    .prog-label{width:120px;font-size:.78rem;color:#94a3b8;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .prog-bar-wrap{flex:1;background:#273549;border-radius:20px;height:8px;overflow:hidden}
+    .prog-bar{height:100%;border-radius:20px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .prog-val{width:40px;text-align:right;font-size:.75rem;color:#64748b;flex-shrink:0}
+
+    /* ── Predict panel ───────────────────────────── */
+    .predict-layout{display:grid;grid-template-columns:1fr 340px;gap:1rem;align-items:start}
+    .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+    .fg{display:flex;flex-direction:column;gap:.3rem}
+    .fg label{font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+    .fg input,.fg select{background:#273549;border:1px solid #334155;border-radius:8px;padding:.45rem .7rem;color:#f1f5f9;font-size:.85rem;transition:border-color .15s;-webkit-appearance:none}
+    .fg input:focus,.fg select:focus{outline:none;border-color:#4ade80}
+    .fg select option{background:#1e293b}
+    .predict-btn{width:100%;margin-top:1rem;padding:.7rem;background:#4ade80;border:none;border-radius:10px;color:#0f172a;font-size:.95rem;font-weight:800;cursor:pointer;transition:opacity .15s}
+    .predict-btn:hover{opacity:.88}
+    .predict-btn:disabled{opacity:.5;cursor:wait}
+    .result-panel{background:#1e293b;border-radius:12px;padding:1.5rem;border:1px solid #334155;position:sticky;top:80px}
+    .result-panel .r-label{font-size:.72rem;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem}
+    .result-panel .r-val{font-size:3.5rem;font-weight:900;color:#4ade80;line-height:1;margin-bottom:.2rem}
+    .result-panel .r-unit{font-size:.85rem;color:#64748b}
+    .result-panel .r-model{font-size:.72rem;color:#475569;margin-top:.75rem}
+    .result-panel .r-history{margin-top:1rem;border-top:1px solid #334155;padding-top:.75rem}
+    .result-panel .r-history-title{font-size:.7rem;font-weight:700;color:#475569;text-transform:uppercase;margin-bottom:.4rem}
+    .history-item{display:flex;justify-content:space-between;font-size:.75rem;padding:.25rem 0;border-bottom:1px solid #1e293b;color:#94a3b8}
+    .history-item span:last-child{color:#4ade80;font-weight:700}
+    .r-placeholder{text-align:center;padding:2rem 0;color:#334155}
+    .r-placeholder .r-ph-icon{font-size:3rem;margin-bottom:.5rem}
+    .r-placeholder .r-ph-text{font-size:.8rem}
+
+    /* ── Scrollbar ───────────────────────────────── */
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:#1e293b}
+    ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:#475569}
+
+    /* ── Responsive ──────────────────────────────── */
+    @media(max-width:900px){
+      .kpi-row{grid-template-columns:repeat(2,1fr)}
+      .chart-grid.cols-2,.chart-grid.cols-3{grid-template-columns:1fr}
+      .predict-layout{grid-template-columns:1fr}
+      .metric-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:640px){
+      .sidebar{display:none}
+      .kpi-row{grid-template-columns:1fr 1fr}
+      .form-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ═══ SIDEBAR ════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">🌾 AgriYield AI</div>
+      <div class="sub">Crop Yield Predictor</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Analytics</div>
+      <div class="nav-item active" data-tab="overview">
+        <span class="icon">📊</span> Overview
+      </div>
+      <div class="nav-item" data-tab="crops">
+        <span class="icon">🌱</span> Crop Analysis
+      </div>
+      <div class="nav-item" data-tab="regions">
+        <span class="icon">🗺️</span> Regional Insights
+      </div>
+      <div class="nav-item" data-tab="environment">
+        <span class="icon">🌦️</span> Environment
+      </div>
+      <div class="nav-section" style="margin-top:.5rem">Prediction</div>
+      <div class="nav-item" data-tab="predict">
+        <span class="icon">🔮</span> Predict Yield
+      </div>
+      <div class="nav-section" style="margin-top:.5rem">Model</div>
+      <div class="nav-item" data-tab="models">
+        <span class="icon">🤖</span> Model Metrics
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>Flask API live · RandomForest
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ════════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="tab-title">Overview</div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-green">R² = 0.9646</span>
+        <span class="badge badge-blue">4,000 Records</span>
+        <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: OVERVIEW ════════════════════════════════ -->
+    <div class="content active" id="tab-overview">
+
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi green">
+          <div class="kpi-label">Dataset Records</div>
+          <div class="kpi-value">4,000</div>
+          <div class="kpi-sub">3,880 clean after dropna</div>
+          <div class="kpi-icon">🗂️</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">Best Model R²</div>
+          <div class="kpi-value">96.5%</div>
+          <div class="kpi-sub">RandomForest · CV-R² 96.4%</div>
+          <div class="kpi-icon">🤖</div>
+        </div>
+        <div class="kpi purple">
+          <div class="kpi-label">Mean Yield</div>
+          <div class="kpi-value">5.27</div>
+          <div class="kpi-sub">T/Ha · Median: 1.74</div>
+          <div class="kpi-icon">🌾</div>
+        </div>
+        <div class="kpi amber">
+          <div class="kpi-label">Crops Tracked</div>
+          <div class="kpi-value">8</div>
+          <div class="kpi-sub">Across 8 States · 3 Seasons</div>
+          <div class="kpi-icon">🌿</div>
+        </div>
+      </div>
+
+      <!-- Charts row 1 -->
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-title">Yield by Crop — Mean vs Median</div>
+          <div class="chart-desc">Comparison of mean and median yield per crop type (Sugarcane excluded for scale)</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="c-crop-bar"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Season Distribution</div>
+          <div class="chart-desc">Record count across Kharif, Rabi and Zaid seasons</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="c-season-donut"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Charts row 2 -->
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-title">State-wise Mean Yield</div>
+          <div class="chart-desc">Average yield (T/Ha) by state — all crops combined</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="c-state-bar"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Model RMSE Comparison</div>
+          <div class="chart-desc">Lower RMSE indicates better prediction accuracy</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="c-model-rmse"></canvas></div>
+        </div>
+      </div>
+
+    </div><!-- /overview -->
+
+    <!-- ══ TAB: CROPS ════════════════════════════════════ -->
+    <div class="content" id="tab-crops">
+
+      <div class="kpi-row">
+        <div class="kpi green">
+          <div class="kpi-label">Highest Mean Yield</div>
+          <div class="kpi-value">Sugarcane</div>
+          <div class="kpi-sub">46.94 T/Ha average</div>
+          <div class="kpi-icon">🎋</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">Most Records</div>
+          <div class="kpi-value">Rice</div>
+          <div class="kpi-sub">682 farm records</div>
+          <div class="kpi-icon">🍚</div>
+        </div>
+        <div class="kpi purple">
+          <div class="kpi-label">Lowest Variability</div>
+          <div class="kpi-value">Pulses</div>
+          <div class="kpi-sub">Std Dev: 0.42 T/Ha</div>
+          <div class="kpi-icon">🫘</div>
+        </div>
+        <div class="kpi amber">
+          <div class="kpi-label">Highest Max Yield</div>
+          <div class="kpi-value">101.44</div>
+          <div class="kpi-sub">Sugarcane peak (T/Ha)</div>
+          <div class="kpi-icon">📈</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-title">Crop Yield Range (Min / Mean / Max)</div>
+          <div class="chart-desc">Excluding Sugarcane outlier for readability of remaining crops</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="c-crop-range"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Crop Record Distribution</div>
+          <div class="chart-desc">How many farm records exist per crop in the dataset</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="c-crop-count"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Crop table -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="t-title">Crop Performance Summary</div>
+        </div>
+        <div class="table-scroll">
+          <table id="crop-table"></table>
+        </div>
+      </div>
+
+    </div><!-- /crops -->
+
+    <!-- ══ TAB: REGIONS ══════════════════════════════════ -->
+    <div class="content" id="tab-regions">
+
+      <div class="kpi-row">
+        <div class="kpi green">
+          <div class="kpi-label">Top State</div>
+          <div class="kpi-value">Punjab</div>
+          <div class="kpi-sub">Mean yield 6.12 T/Ha</div>
+          <div class="kpi-icon">🏆</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">States Covered</div>
+          <div class="kpi-value">8</div>
+          <div class="kpi-sub">Andhra Pradesh → Telangana</div>
+          <div class="kpi-icon">🗺️</div>
+        </div>
+        <div class="kpi purple">
+          <div class="kpi-label">Districts</div>
+          <div class="kpi-value">10</div>
+          <div class="kpi-sub">Across all states</div>
+          <div class="kpi-icon">📍</div>
+        </div>
+        <div class="kpi amber">
+          <div class="kpi-label">Irrigation Methods</div>
+          <div class="kpi-value">4</div>
+          <div class="kpi-sub">Drip · Flood · Rainfed · Sprinkler</div>
+          <div class="kpi-icon">💧</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-title">State Mean vs Median Yield</div>
+          <div class="chart-desc">Comparing central tendency metrics across states</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="c-state-compare"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Records per State</div>
+          <div class="chart-desc">Dataset coverage distribution across Indian states</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="c-state-count"></canvas></div>
+        </div>
+      </div>
+
+      <!-- State table -->
+      <div class="table-card">
+        <div class="table-header"><div class="t-title">State Yield Summary</div></div>
+        <div class="table-scroll"><table id="state-table"></table></div>
+      </div>
+
+    </div><!-- /regions -->
+
+    <!-- ══ TAB: ENVIRONMENT ══════════════════════════════ -->
+    <div class="content" id="tab-environment">
+
+      <div class="kpi-row">
+        <div class="kpi green">
+          <div class="kpi-label">Avg Rainfall</div>
+          <div class="kpi-value">601</div>
+          <div class="kpi-sub">mm · Range: 80–1395</div>
+          <div class="kpi-icon">🌧️</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">Avg Temperature</div>
+          <div class="kpi-value">26.8°C</div>
+          <div class="kpi-sub">Range: 16.2°C – 39.7°C</div>
+          <div class="kpi-icon">🌡️</div>
+        </div>
+        <div class="kpi purple">
+          <div class="kpi-label">Avg Humidity</div>
+          <div class="kpi-value">63.2%</div>
+          <div class="kpi-sub">Range: 25% – 95%</div>
+          <div class="kpi-icon">💧</div>
+        </div>
+        <div class="kpi amber">
+          <div class="kpi-label">Avg Soil pH</div>
+          <div class="kpi-value">6.70</div>
+          <div class="kpi-sub">Range: 5.2 – 8.4 (near neutral)</div>
+          <div class="kpi-icon">🧪</div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-title">Environmental Parameter Ranges</div>
+          <div class="chart-desc">Min, Mean, and Max values for key environmental inputs</div>
+          <div class="chart-wrap" style="height:270px"><canvas id="c-env-range"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Season Mean Yield Comparison</div>
+          <div class="chart-desc">Kharif vs Rabi vs Zaid — median yield comparison</div>
+          <div class="chart-wrap" style="height:270px"><canvas id="c-season-yield"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Env stats table -->
+      <div class="table-card">
+        <div class="table-header"><div class="t-title">Dataset Statistics — Key Variables</div></div>
+        <div class="table-scroll"><table id="stats-table"></table></div>
+      </div>
+
+    </div><!-- /environment -->
+
+    <!-- ══ TAB: PREDICT ══════════════════════════════════ -->
+    <div class="content" id="tab-predict">
+      <div class="predict-layout">
+
+        <!-- Form -->
+        <div class="chart-card">
+          <div class="chart-title" style="margin-bottom:.25rem">Yield Prediction — Enter Farm Parameters</div>
+          <div class="chart-desc" style="margin-bottom:1rem">Fill in all 20 fields and click Predict to get an instant yield forecast</div>
+
+          <form id="pf" onsubmit="doPredict(event)">
+            <div class="form-grid">
+              <div class="fg"><label>Crop</label>
+                <select name="Crop">
+                  <option>Chilli</option><option>Cotton</option><option>Groundnut</option>
+                  <option>Maize</option><option>Pulses</option><option selected>Rice</option>
+                  <option>Sugarcane</option><option>Wheat</option>
+                </select>
+              </div>
+              <div class="fg"><label>Season</label>
+                <select name="Season">
+                  <option selected>Kharif</option><option>Rabi</option><option>Zaid</option>
+                </select>
+              </div>
+              <div class="fg"><label>State</label>
+                <select name="State">
+                  <option>Andhra Pradesh</option><option>Gujarat</option>
+                  <option>Karnataka</option><option>Madhya Pradesh</option>
+                  <option>Maharashtra</option><option>Punjab</option>
+                  <option>Tamil Nadu</option><option selected>Telangana</option>
+                </select>
+              </div>
+              <div class="fg"><label>District</label>
+                <select name="District">
+                  <option>Erode</option><option>Guntur</option><option>Indore</option>
+                  <option>Krishna</option><option>Ludhiana</option><option>Nalgonda</option>
+                  <option>Nashik</option><option>Raichur</option><option>Rajkot</option>
+                  <option selected>Warangal</option>
+                </select>
+              </div>
+              <div class="fg"><label>Irrigation Method</label>
+                <select name="Irrigation_Method">
+                  <option selected>Drip</option><option>Flood</option>
+                  <option>Rainfed</option><option>Sprinkler</option>
+                </select>
+              </div>
+              <div class="fg"><label>Farm Area (Ha)</label>
+                <input type="number" name="Farm_Area_Hectares" value="5" step="0.01" min="0.5" max="15"/>
+              </div>
+              <div class="fg"><label>Rainfall (mm)</label>
+                <input type="number" name="Rainfall_mm" value="700" step="1"/>
+              </div>
+              <div class="fg"><label>Avg Temp (°C)</label>
+                <input type="number" name="Avg_Temperature_C" value="29" step="0.1"/>
+              </div>
+              <div class="fg"><label>Humidity (%)</label>
+                <input type="number" name="Humidity_pct" value="70" step="0.1"/>
+              </div>
+              <div class="fg"><label>Sunlight Hrs/Day</label>
+                <input type="number" name="Sunlight_Hours_Day" value="7" step="0.1"/>
+              </div>
+              <div class="fg"><label>Soil pH</label>
+                <input type="number" name="Soil_pH" value="6.2" step="0.01"/>
+              </div>
+              <div class="fg"><label>Soil Moisture (%)</label>
+                <input type="number" name="Soil_Moisture_pct" value="28" step="0.1"/>
+              </div>
+              <div class="fg"><label>Nitrogen (kg/ha)</label>
+                <input type="number" name="Nitrogen_kg_ha" value="120" step="1"/>
+              </div>
+              <div class="fg"><label>Phosphorus (kg/ha)</label>
+                <input type="number" name="Phosphorus_kg_ha" value="55" step="1"/>
+              </div>
+              <div class="fg"><label>Potassium (kg/ha)</label>
+                <input type="number" name="Potassium_kg_ha" value="110" step="1"/>
+              </div>
+              <div class="fg"><label>Fertilizer (kg/ha)</label>
+                <input type="number" name="Fertilizer_kg_ha" value="180" step="1"/>
+              </div>
+              <div class="fg"><label>Pesticide (L/ha)</label>
+                <input type="number" name="Pesticide_Litre_ha" value="5" step="0.1"/>
+              </div>
+              <div class="fg"><label>Seed Quality (0–1)</label>
+                <input type="number" name="Seed_Quality_Score" value="0.9" step="0.01" min="0" max="1"/>
+              </div>
+              <div class="fg"><label>Water Used (m³)</label>
+                <input type="number" name="Water_Used_m3" value="3000" step="10"/>
+              </div>
+              <div class="fg"><label>Disease Risk (%)</label>
+                <input type="number" name="Disease_Pest_Risk_pct" value="35" step="0.1"/>
+              </div>
+            </div>
+            <button type="submit" class="predict-btn" id="pred-btn">⚡ Predict Yield</button>
+          </form>
+        </div>
+
+        <!-- Result panel -->
+        <div class="result-panel">
+          <div id="result-placeholder" class="r-placeholder">
+            <div class="r-ph-icon">🌾</div>
+            <div class="r-ph-text">Fill the form and click<br>Predict to see the result</div>
+          </div>
+          <div id="result-content" style="display:none">
+            <div class="r-label">Predicted Yield</div>
+            <div class="r-val" id="r-val">—</div>
+            <div class="r-unit">Tonnes per Hectare</div>
+            <div class="r-model" id="r-model"></div>
+            <div class="r-history">
+              <div class="r-history-title">Recent Predictions</div>
+              <div id="r-history-list"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /predict -->
+
+    <!-- ══ TAB: MODELS ═══════════════════════════════════ -->
+    <div class="content" id="tab-models">
+
+      <div class="kpi-row">
+        <div class="kpi green">
+          <div class="kpi-label">Best Model</div>
+          <div class="kpi-value">RF</div>
+          <div class="kpi-sub">RandomForest · R²=0.9646</div>
+          <div class="kpi-icon">🏆</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">Best RMSE</div>
+          <div class="kpi-value">2.19</div>
+          <div class="kpi-sub">RandomForest on test set</div>
+          <div class="kpi-icon">📉</div>
+        </div>
+        <div class="kpi purple">
+          <div class="kpi-label">Best MAE</div>
+          <div class="kpi-value">0.617</div>
+          <div class="kpi-sub">RandomForest · avg error</div>
+          <div class="kpi-icon">🎯</div>
+        </div>
+        <div class="kpi amber">
+          <div class="kpi-label">CV R² (5-fold)</div>
+          <div class="kpi-value">96.4%</div>
+          <div class="kpi-sub">Robust generalisation</div>
+          <div class="kpi-icon">🔁</div>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-card best">
+          <div class="metric-card-head">
+            <span class="metric-model">RandomForest</span>
+            <span class="tag tag-amber">⭐ Best</span>
+          </div>
+          <div class="metric-rows">
+            <div class="metric-pill highlight"><span class="m-key">R²</span><span class="m-val">0.9646</span></div>
+            <div class="metric-pill highlight"><span class="m-key">CV R²</span><span class="m-val">0.9641</span></div>
+            <div class="metric-pill"><span class="m-key">RMSE</span><span class="m-val">2.1907</span></div>
+            <div class="metric-pill"><span class="m-key">MAE</span><span class="m-val">0.6172</span></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <span class="metric-model">GradientBoosting</span>
+            <span class="tag tag-blue">2nd</span>
+          </div>
+          <div class="metric-rows">
+            <div class="metric-pill"><span class="m-key">R²</span><span class="m-val">0.9567</span></div>
+            <div class="metric-pill"><span class="m-key">CV R²</span><span class="m-val">0.9530</span></div>
+            <div class="metric-pill"><span class="m-key">RMSE</span><span class="m-val">2.4207</span></div>
+            <div class="metric-pill"><span class="m-key">MAE</span><span class="m-val">0.9418</span></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <span class="metric-model">Ridge Regression</span>
+            <span class="tag tag-purple">Linear</span>
+          </div>
+          <div class="metric-rows">
+            <div class="metric-pill"><span class="m-key">R²</span><span class="m-val">0.1532</span></div>
+            <div class="metric-pill"><span class="m-key">CV R²</span><span class="m-val">0.2309</span></div>
+            <div class="metric-pill"><span class="m-key">RMSE</span><span class="m-val">10.7081</span></div>
+            <div class="metric-pill"><span class="m-key">MAE</span><span class="m-val">5.8911</span></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <span class="metric-model">Linear Regression</span>
+            <span class="tag tag-purple">Baseline</span>
+          </div>
+          <div class="metric-rows">
+            <div class="metric-pill"><span class="m-key">R²</span><span class="m-val">0.1531</span></div>
+            <div class="metric-pill"><span class="m-key">CV R²</span><span class="m-val">0.2308</span></div>
+            <div class="metric-pill"><span class="m-key">RMSE</span><span class="m-val">10.7087</span></div>
+            <div class="metric-pill"><span class="m-key">MAE</span><span class="m-val">5.8923</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid cols-2">
+        <div class="chart-card">
+          <div class="chart-title">R² Score — All Models</div>
+          <div class="chart-desc">Higher is better. Ensemble models far outperform linear baselines.</div>
+          <div class="chart-wrap" style="height:240px"><canvas id="c-r2-compare"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Feature Importance Ranking (Top 10)</div>
+          <div class="chart-desc">Based on RandomForest mean decrease in impurity</div>
+          <div class="chart-wrap" style="height:240px"><canvas id="c-feat-imp"></canvas></div>
+        </div>
+      </div>
+
+      <!-- R² progress bars -->
+      <div class="chart-card" style="margin-bottom:1.5rem">
+        <div class="chart-title" style="margin-bottom:.1rem">Cross-Validation R² — Visual Comparison</div>
+        <div class="chart-desc" style="margin-bottom:1rem">5-fold CV R² scores for each model</div>
+        <div id="cv-prog"></div>
+      </div>
+
+    </div><!-- /models -->
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ═══ DATA (embedded from API outputs) ════════════════════════════════════════
+
+const CROPS = [
+  {Crop:"Chilli",    Mean:1.5403, Median:1.56,  Min:0.3,  Max:3.9,   Std:0.7855, Count:407},
+  {Crop:"Cotton",   Mean:1.2257, Median:1.24,  Min:0.3,  Max:2.9,   Std:0.5252, Count:504},
+  {Crop:"Groundnut",Mean:1.3179, Median:1.4,   Min:0.3,  Max:3.02,  Std:0.6078, Count:419},
+  {Crop:"Maize",    Mean:2.7171, Median:2.85,  Min:0.3,  Max:6.08,  Std:1.2366, Count:547},
+  {Crop:"Pulses",   Mean:0.9182, Median:0.94,  Min:0.3,  Max:2.09,  Std:0.4241, Count:494},
+  {Crop:"Rice",     Mean:2.4394, Median:2.46,  Min:0.3,  Max:5.7,   Std:1.1479, Count:682},
+  {Crop:"Sugarcane",Mean:46.9387,Median:48.03, Min:1.39, Max:101.44,Std:21.0878,Count:303},
+  {Crop:"Wheat",    Mean:2.1092, Median:2.225, Min:0.3,  Max:4.56,  Std:0.9149, Count:612},
+];
+const SEASONS = [
+  {Season:"Kharif", Mean:5.644,  Median:1.95, Std:14.42, Count:1772},
+  {Season:"Rabi",   Mean:5.0805, Median:1.66, Std:12.83, Count:1607},
+  {Season:"Zaid",   Mean:4.6659, Median:1.45, Std:11.32, Count:589},
+];
+const STATES = [
+  {State:"Punjab",         Mean:6.1211, Median:1.74, Count:484},
+  {State:"Karnataka",      Mean:5.7345, Median:1.77, Count:483},
+  {State:"Gujarat",        Mean:5.6996, Median:1.72, Count:483},
+  {State:"Telangana",      Mean:5.0768, Median:1.84, Count:511},
+  {State:"Maharashtra",    Mean:5.0303, Median:1.77, Count:510},
+  {State:"Madhya Pradesh", Mean:5.0297, Median:1.67, Count:491},
+  {State:"Tamil Nadu",     Mean:4.9012, Median:1.73, Count:481},
+  {State:"Andhra Pradesh", Mean:4.6508, Median:1.65, Count:525},
+];
+const METRICS = {
+  RandomForest:     {R2:0.9646, CV_R2:0.9641, RMSE:2.1907,  MAE:0.6172},
+  GradientBoosting: {R2:0.9567, CV_R2:0.953,  RMSE:2.4207,  MAE:0.9418},
+  Ridge:            {R2:0.1532, CV_R2:0.2309, RMSE:10.7081, MAE:5.8911},
+  LinearRegression: {R2:0.1531, CV_R2:0.2308, RMSE:10.7087, MAE:5.8923},
+};
+const STATS = {
+  Yield_Tonnes_Ha:   {mean:5.271, std:13.361, min:0.3,   max:101.44},
+  Rainfall_mm:       {mean:601.2, std:288.9,  min:80,    max:1395.2},
+  Avg_Temperature_C: {mean:26.82, std:3.82,   min:16.2,  max:39.7},
+  Humidity_pct:      {mean:63.21, std:11.96,  min:25,    max:95},
+  Soil_pH:           {mean:6.701, std:0.641,  min:5.2,   max:8.4},
+  Fertilizer_kg_ha:  {mean:186.0, std:60.26,  min:40,    max:400},
+  Farm_Area_Hectares:{mean:7.888, std:4.224,  min:0.5,   max:15},
+  Profit_INR:        {mean:111556,std:545082, min:-1019223,max:4345421},
+};
+// Feature importances (approximate from RandomForest)
+const FEAT_IMP = [
+  {name:"Water_Used_m3",       imp:0.198},
+  {name:"Farm_Area_Hectares",  imp:0.175},
+  {name:"Nitrogen_kg_ha",      imp:0.091},
+  {name:"Fertilizer_kg_ha",    imp:0.082},
+  {name:"Rainfall_mm",         imp:0.071},
+  {name:"Soil_Moisture_pct",   imp:0.063},
+  {name:"Crop",                imp:0.058},
+  {name:"Potassium_kg_ha",     imp:0.051},
+  {name:"Phosphorus_kg_ha",    imp:0.044},
+  {name:"Avg_Temperature_C",   imp:0.037},
+];
+
+// ═══ CHART DEFAULTS ═══════════════════════════════════════════════════════════
+Chart.defaults.color = "#64748b";
+Chart.defaults.font.family = "-apple-system,'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size = 11;
+const GRID = {color:"#1e293b", drawBorder:false};
+const PALETTE = ["#4ade80","#60a5fa","#a78bfa","#fbbf24","#2dd4bf","#f87171","#fb923c","#e879f9"];
+
+function mkChart(id, cfg){ return new Chart(document.getElementById(id).getContext("2d"), cfg); }
+
+// ═══ BUILD ALL CHARTS ═════════════════════════════════════════════════════════
+function buildCharts(){
+
+  // ── Overview ──────────────────────────────────────────────────────────────
+  // Crop bar (excl. Sugarcane)
+  const cropsEx = CROPS.filter(c => c.Crop !== "Sugarcane");
+  mkChart("c-crop-bar",{
+    type:"bar",
+    data:{
+      labels: cropsEx.map(c=>c.Crop),
+      datasets:[
+        {label:"Mean",  data:cropsEx.map(c=>c.Mean),   backgroundColor:"#4ade80", borderRadius:5},
+        {label:"Median",data:cropsEx.map(c=>c.Median), backgroundColor:"#60a5fa", borderRadius:5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#94a3b8"}}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8"}},y:{grid:GRID,ticks:{color:"#94a3b8"},title:{display:true,text:"T/Ha",color:"#64748b"}}}}
+  });
+
+  // Season donut
+  mkChart("c-season-donut",{
+    type:"doughnut",
+    data:{
+      labels:SEASONS.map(s=>s.Season),
+      datasets:[{data:SEASONS.map(s=>s.Count), backgroundColor:["#4ade80","#60a5fa","#fbbf24"], borderWidth:0, hoverOffset:8}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:"62%",
+      plugins:{legend:{position:"bottom",labels:{color:"#94a3b8",padding:16}}}}
+  });
+
+  // State bar
+  mkChart("c-state-bar",{
+    type:"bar",
+    data:{
+      labels:STATES.map(s=>s.State),
+      datasets:[{label:"Mean Yield",data:STATES.map(s=>s.Mean),
+        backgroundColor:STATES.map((_,i)=>`hsl(${140+i*15},60%,${45+i*2}%)`),
+        borderRadius:5}]
+    },
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8"}},y:{grid:{display:false},ticks:{color:"#94a3b8"}}}}
+  });
+
+  // Model RMSE
+  const mNames = Object.keys(METRICS);
+  mkChart("c-model-rmse",{
+    type:"bar",
+    data:{
+      labels:mNames,
+      datasets:[{label:"RMSE",data:mNames.map(m=>METRICS[m].RMSE),
+        backgroundColor:["#4ade80","#60a5fa","#f87171","#f87171"],
+        borderRadius:5}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8",maxRotation:0}},y:{grid:GRID,ticks:{color:"#94a3b8"},title:{display:true,text:"RMSE (lower better)",color:"#64748b"}}}}
+  });
+
+  // ── Crops ──────────────────────────────────────────────────────────────────
+  // Crop range (excl. Sugarcane)
+  mkChart("c-crop-range",{
+    type:"bar",
+    data:{
+      labels:cropsEx.map(c=>c.Crop),
+      datasets:[
+        {label:"Min",  data:cropsEx.map(c=>c.Min),  backgroundColor:"#f87171", borderRadius:3},
+        {label:"Mean", data:cropsEx.map(c=>c.Mean), backgroundColor:"#4ade80", borderRadius:3},
+        {label:"Max",  data:cropsEx.map(c=>c.Max),  backgroundColor:"#60a5fa", borderRadius:3},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#94a3b8"}}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8"}},y:{grid:GRID,ticks:{color:"#94a3b8"},title:{display:true,text:"T/Ha",color:"#64748b"}}}}
+  });
+
+  // Crop count
+  mkChart("c-crop-count",{
+    type:"doughnut",
+    data:{
+      labels:CROPS.map(c=>c.Crop),
+      datasets:[{data:CROPS.map(c=>c.Count), backgroundColor:PALETTE, borderWidth:0, hoverOffset:8}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:"55%",
+      plugins:{legend:{position:"right",labels:{color:"#94a3b8",padding:10,font:{size:11}}}}}
+  });
+
+  // Crop table
+  const ct = document.getElementById("crop-table");
+  ct.innerHTML = `<thead><tr><th>Crop</th><th>Records</th><th>Mean T/Ha</th><th>Median T/Ha</th><th>Std Dev</th><th>Min</th><th>Max</th></tr></thead>`;
+  const tb = ct.createTBody();
+  [...CROPS].sort((a,b)=>b.Mean-a.Mean).forEach(c=>{
+    const r=tb.insertRow();
+    r.innerHTML = `<td><span class="tag tag-green">${c.Crop}</span></td>
+      <td>${c.Count}</td><td>${c.Mean.toFixed(3)}</td><td>${c.Median.toFixed(3)}</td>
+      <td>${c.Std.toFixed(4)}</td><td>${c.Min}</td><td>${c.Max}</td>`;
+  });
+
+  // ── Regions ────────────────────────────────────────────────────────────────
+  mkChart("c-state-compare",{
+    type:"bar",
+    data:{
+      labels:STATES.map(s=>s.State),
+      datasets:[
+        {label:"Mean",  data:STATES.map(s=>s.Mean),   backgroundColor:"#4ade80", borderRadius:4},
+        {label:"Median",data:STATES.map(s=>s.Median), backgroundColor:"#60a5fa", borderRadius:4},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#94a3b8"}}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8",maxRotation:30}},y:{grid:GRID,ticks:{color:"#94a3b8"}}}}
+  });
+
+  mkChart("c-state-count",{
+    type:"pie",
+    data:{
+      labels:STATES.map(s=>s.State),
+      datasets:[{data:STATES.map(s=>s.Count), backgroundColor:PALETTE, borderWidth:0, hoverOffset:6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"right",labels:{color:"#94a3b8",padding:8,font:{size:10}}}}}
+  });
+
+  // State table
+  const st = document.getElementById("state-table");
+  st.innerHTML=`<thead><tr><th>State</th><th>Mean Yield (T/Ha)</th><th>Median Yield</th><th>Records</th><th>Rank</th></tr></thead>`;
+  const stb = st.createTBody();
+  STATES.forEach((s,i)=>{
+    const r=stb.insertRow();
+    const medals=["🥇","🥈","🥉"];
+    r.innerHTML = `<td>${s.State}</td><td>${s.Mean.toFixed(4)}</td><td>${s.Median.toFixed(2)}</td>
+      <td>${s.Count}</td><td>${medals[i]||"#"+(i+1)}</td>`;
+  });
+
+  // ── Environment ────────────────────────────────────────────────────────────
+  const envKeys = ["Rainfall_mm","Avg_Temperature_C","Humidity_pct","Soil_pH","Fertilizer_kg_ha"];
+  const envLabels = ["Rainfall (mm)","Temp (°C)","Humidity (%)","Soil pH","Fertilizer (kg/ha)"];
+  // Normalize to 0-100 for radar-style bar
+  const envData = envKeys.map(k=>{
+    const s=STATS[k]; return {key:k, mean:s.mean, min:s.min, max:s.max};
+  });
+  const norm = envData.map(e=>((e.mean-e.min)/(e.max-e.min)*100).toFixed(1));
+  mkChart("c-env-range",{
+    type:"bar",
+    data:{
+      labels:envLabels,
+      datasets:[
+        {label:"Min (norm)",  data:envData.map(()=>0),              backgroundColor:"#f87171",  borderRadius:2},
+        {label:"Mean (norm)", data:norm,                             backgroundColor:"#4ade80",  borderRadius:2},
+        {label:"Max (norm)",  data:envData.map(()=>100),            backgroundColor:"#60a5fa55",borderRadius:2},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:ctx=>{
+        const e=envData[ctx.dataIndex];
+        if(ctx.datasetIndex===1) return ` Mean: ${e.mean}`;
+        if(ctx.datasetIndex===0) return ` Min: ${e.min}`;
+        return ` Max: ${e.max}`;
+      }}}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8"}},y:{grid:GRID,ticks:{color:"#94a3b8"},title:{display:true,text:"Normalised 0–100",color:"#64748b"},max:110}}}
+  });
+
+  mkChart("c-season-yield",{
+    type:"bar",
+    data:{
+      labels:SEASONS.map(s=>s.Season),
+      datasets:[
+        {label:"Mean Yield",  data:SEASONS.map(s=>s.Mean),   backgroundColor:["#4ade80","#60a5fa","#fbbf24"],borderRadius:8,barPercentage:0.5},
+        {label:"Median Yield",data:SEASONS.map(s=>s.Median), backgroundColor:["#16a34a","#2563eb","#d97706"],borderRadius:8,barPercentage:0.5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#94a3b8"}}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8"}},y:{grid:GRID,ticks:{color:"#94a3b8"},title:{display:true,text:"T/Ha",color:"#64748b"}}}}
+  });
+
+  // Stats table
+  const sts = document.getElementById("stats-table");
+  sts.innerHTML=`<thead><tr><th>Variable</th><th>Mean</th><th>Std Dev</th><th>Min</th><th>Max</th></tr></thead>`;
+  const ststb=sts.createTBody();
+  Object.entries(STATS).forEach(([k,v])=>{
+    const r=ststb.insertRow();
+    const fmt=n=>Math.abs(n)>1000?n.toLocaleString():n;
+    r.innerHTML=`<td><code style="color:#4ade80;font-size:.8rem">${k}</code></td>
+      <td>${fmt(+v.mean.toFixed(3))}</td><td>${fmt(+v.std.toFixed(3))}</td>
+      <td>${fmt(v.min)}</td><td>${fmt(v.max)}</td>`;
+  });
+
+  // ── Models ─────────────────────────────────────────────────────────────────
+  mkChart("c-r2-compare",{
+    type:"bar",
+    data:{
+      labels:Object.keys(METRICS),
+      datasets:[
+        {label:"Test R²",data:Object.values(METRICS).map(m=>m.R2),     backgroundColor:["#4ade80","#60a5fa","#f87171","#f87171"],borderRadius:6},
+        {label:"CV R²",  data:Object.values(METRICS).map(m=>m.CV_R2),  backgroundColor:["#16a34a","#2563eb","#dc2626","#dc2626"],borderRadius:6},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#94a3b8"}}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8",maxRotation:0,font:{size:10}}},
+              y:{grid:GRID,ticks:{color:"#94a3b8"},min:0,max:1.05}}}
+  });
+
+  mkChart("c-feat-imp",{
+    type:"bar",
+    data:{
+      labels:FEAT_IMP.map(f=>f.name),
+      datasets:[{label:"Importance",data:FEAT_IMP.map(f=>f.imp),
+        backgroundColor:FEAT_IMP.map((_,i)=>`hsl(${140-i*8},60%,${55-i*2}%)`),
+        borderRadius:5}]
+    },
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:{color:"#94a3b8"}},y:{grid:{display:false},ticks:{color:"#94a3b8",font:{size:10}}}}}
+  });
+
+  // CV progress bars
+  const cvEl = document.getElementById("cv-prog");
+  Object.entries(METRICS).forEach(([name,m])=>{
+    const pct = (m.CV_R2*100).toFixed(1);
+    const col = m.CV_R2>0.9?"#4ade80":m.CV_R2>0.5?"#fbbf24":"#f87171";
+    cvEl.innerHTML += `
+      <div class="prog-row">
+        <div class="prog-label">${name}</div>
+        <div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%;background:${col}"></div></div>
+        <div class="prog-val">${pct}%</div>
+      </div>`;
+  });
+}
+
+// ═══ NAVIGATION ═══════════════════════════════════════════════════════════════
+const TAB_TITLES = {
+  overview:"Overview", crops:"Crop Analysis", regions:"Regional Insights",
+  environment:"Environment", predict:"Yield Prediction", models:"Model Metrics"
+};
+document.querySelectorAll(".nav-item").forEach(el=>{
+  el.addEventListener("click",()=>{
+    const tab = el.dataset.tab;
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    el.classList.add("active");
+    document.querySelectorAll(".content").forEach(c=>c.classList.remove("active"));
+    document.getElementById("tab-"+tab).classList.add("active");
+    document.getElementById("tab-title").textContent = TAB_TITLES[tab];
+  });
+});
+
+// ═══ PREDICT ══════════════════════════════════════════════════════════════════
+const predHistory = [];
+
+async function doPredict(e){
+  e.preventDefault();
+  const btn = document.getElementById("pred-btn");
+  btn.disabled = true; btn.textContent = "Predicting…";
+  const fd = new FormData(e.target);
+  const body = {};
+  fd.forEach((v,k)=>{ body[k] = isNaN(v)||v===""?v:parseFloat(v); });
+  try {
+    const res  = await fetch("/api/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data = await res.json();
+    const yld  = data.predicted_yield_tonnes_ha;
+    document.getElementById("result-placeholder").style.display = "none";
+    document.getElementById("result-content").style.display    = "block";
+    document.getElementById("r-val").textContent   = yld.toFixed(3);
+    document.getElementById("r-model").textContent = `Model: ${data.model} · ${new Date().toLocaleTimeString()}`;
+    // History
+    predHistory.unshift({crop:body.Crop, season:body.Season, yield:yld.toFixed(3)});
+    if(predHistory.length>5) predHistory.pop();
+    const hl = document.getElementById("r-history-list");
+    hl.innerHTML = predHistory.map(h=>`<div class="history-item"><span>${h.crop} / ${h.season}</span><span>${h.yield} T/Ha</span></div>`).join("");
+  } catch(err){
+    alert("API error: "+err.message+"\n\nMake sure Flask is running on http://localhost:5000");
+  } finally {
+    btn.disabled = false; btn.textContent = "⚡ Predict Yield";
+  }
+}
+
+async function refreshAll(){
+  try {
+    const h = await fetch("/api/health");
+    const d = await h.json();
+    if(d.status==="ok") console.log("API healthy:", d);
+  } catch { console.warn("API offline"); }
+}
+
+// ═══ INIT ══════════════════════════════════════════════════════════════════════
+buildCharts();
+</script>
+</body>
+</html>

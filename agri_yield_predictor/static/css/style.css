@@ -1,0 +1,101 @@
+/* ── Reset & Base ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+       background: #f0f4f8; color: #1f2328; font-size: 14px; line-height: 1.6; }
+a { text-decoration: none; color: inherit; }
+
+/* ── Nav ─────────────────────────────────────────────────── */
+nav {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .75rem 2rem; background: #1a3a2a;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+.nav-brand { font-size: 1.2rem; font-weight: 700; color: #6ee67b; flex: 1; }
+.nav-links  { display: flex; gap: .5rem; list-style: none; }
+.nav-btn    { padding: .4rem 1rem; border-radius: 20px; color: #d1fae5;
+              transition: background .2s; font-size: .85rem; }
+.nav-btn:hover, .nav-btn.active { background: #2d6a4f; color: #fff; }
+
+/* ── Badge ────────────────────────────────────────────────── */
+.badge        { padding: .25rem .75rem; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-ok     { background: #d1fae5; color: #065f46; }
+.badge-warn   { background: #fef3c7; color: #92400e; }
+.badge-error  { background: #fee2e2; color: #991b1b; }
+
+/* ── Hero ─────────────────────────────────────────────────── */
+.hero { background: linear-gradient(135deg, #1a3a2a 0%, #2d6a4f 60%, #40916c 100%);
+        color: #fff; text-align: center; padding: 3rem 1rem; }
+.hero h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+.hero p  { opacity: .85; font-size: 1rem; max-width: 600px; margin: auto; }
+
+/* ── Layout ───────────────────────────────────────────────── */
+.container { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
+.section   { margin-bottom: 3rem; scroll-margin-top: 70px; }
+.section-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 1rem;
+                 border-left: 4px solid #2d6a4f; padding-left: .75rem; }
+
+/* ── Card ─────────────────────────────────────────────────── */
+.card { background: #fff; border-radius: 12px; padding: 1.5rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,.08); margin-bottom: 1rem; }
+
+/* ── Form ─────────────────────────────────────────────────── */
+.form-grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+               gap: 1rem; margin-bottom: 1.5rem; }
+.form-group  { display: flex; flex-direction: column; gap: .35rem; }
+.form-group label { font-weight: 600; font-size: .8rem; color: #57606a; text-transform: uppercase; }
+.form-group input, .form-group select {
+  padding: .5rem .75rem; border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: .9rem; transition: border-color .2s; background: #f9fafb; }
+.form-group input:focus, .form-group select:focus {
+  outline: none; border-color: #2d6a4f; background: #fff; }
+
+/* ── Button ───────────────────────────────────────────────── */
+.btn         { padding: .65rem 1.8rem; border: none; border-radius: 8px;
+               cursor: pointer; font-size: .95rem; font-weight: 600; transition: opacity .2s; }
+.btn-primary { background: #2d6a4f; color: #fff; }
+.btn-primary:hover { opacity: .88; }
+
+/* ── Result box ───────────────────────────────────────────── */
+.result-box   { margin-top: 1.5rem; text-align: center; padding: 1.5rem;
+                background: #f0fdf4; border: 2px solid #6ee67b; border-radius: 12px;
+                animation: fadeIn .4s ease; }
+.result-label { font-size: .85rem; color: #065f46; text-transform: uppercase; font-weight: 600; }
+.result-value { font-size: 3rem; font-weight: 800; color: #065f46; line-height: 1.1; }
+.result-unit  { font-size: .9rem; color: #6b7280; margin-top: .2rem; }
+.result-sub   { font-size: .75rem; color: #9ca3af; margin-top: .5rem; }
+.hidden       { display: none !important; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+/* ── Analytics ────────────────────────────────────────────── */
+.analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.analytics-grid .full-width { grid-column: 1 / -1; }
+.chart-container { position: relative; height: 320px; }
+
+/* ── Tables ───────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table  { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th, td { padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+th     { background: #f3f4f6; font-weight: 700; color: #374151; }
+tr:hover td { background: #f9fafb; }
+
+/* ── Metrics grid ─────────────────────────────────────────── */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+.metric-card  { background: #fff; border-radius: 12px; padding: 1.25rem;
+                box-shadow: 0 1px 6px rgba(0,0,0,.08); border-top: 4px solid #2d6a4f; }
+.metric-card.best { border-top-color: #f59e0b; }
+.metric-name  { font-size: .8rem; font-weight: 700; color: #57606a; text-transform: uppercase; margin-bottom: .5rem; }
+.metric-row   { display: flex; justify-content: space-between; font-size: .85rem; padding: .2rem 0; }
+.metric-row span:last-child { font-weight: 700; color: #1f2328; }
+.best-badge   { display: inline-block; background: #fef3c7; color: #92400e;
+                border-radius: 6px; font-size: .7rem; padding: .1rem .5rem; margin-top: .5rem; }
+
+/* ── Footer ───────────────────────────────────────────────── */
+.footer { text-align: center; padding: 1.5rem; color: #9ca3af; font-size: .8rem;
+          border-top: 1px solid #e5e7eb; background: #fff; }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .analytics-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 1.5rem; }
+  nav { flex-wrap: wrap; }
+}

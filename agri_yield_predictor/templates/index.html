@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌾 Agricultural Yield Predictor</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-brand">🌾 AgriYield AI</div>
+    <ul class="nav-links">
+      <li><a href="#predict" class="nav-btn active">Predict</a></li>
+      <li><a href="#analytics" class="nav-btn">Analytics</a></li>
+      <li><a href="#metrics" class="nav-btn">Model Metrics</a></li>
+    </ul>
+    <span id="status-badge" class="badge badge-warn">Connecting…</span>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <h1>Agricultural Yield Predictor</h1>
+    <p>Machine-learning powered crop yield forecasting using weather, soil, and farm parameters</p>
+  </header>
+
+  <main class="container">
+
+    <!-- ── PREDICT SECTION ── -->
+    <section id="predict" class="section">
+      <h2 class="section-title">🔮 Yield Prediction</h2>
+      <div class="card">
+        <form id="predict-form">
+          <div class="form-grid">
+            <!-- Categorical -->
+            <div class="form-group">
+              <label>Crop</label>
+              <select name="Crop" id="Crop" required></select>
+            </div>
+            <div class="form-group">
+              <label>Season</label>
+              <select name="Season" id="Season" required></select>
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <select name="State" id="State" required></select>
+            </div>
+            <div class="form-group">
+              <label>District</label>
+              <select name="District" id="District" required></select>
+            </div>
+            <div class="form-group">
+              <label>Irrigation Method</label>
+              <select name="Irrigation_Method" id="Irrigation_Method" required></select>
+            </div>
+            <!-- Numeric -->
+            <div class="form-group">
+              <label>Farm Area (Hectares)</label>
+              <input type="number" name="Farm_Area_Hectares" value="5" step="0.01" required/>
+            </div>
+            <div class="form-group">
+              <label>Rainfall (mm)</label>
+              <input type="number" name="Rainfall_mm" value="500" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Avg Temperature (°C)</label>
+              <input type="number" name="Avg_Temperature_C" value="28" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Humidity (%)</label>
+              <input type="number" name="Humidity_pct" value="65" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Sunlight Hours/Day</label>
+              <input type="number" name="Sunlight_Hours_Day" value="7" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Soil pH</label>
+              <input type="number" name="Soil_pH" value="6.5" step="0.01" required/>
+            </div>
+            <div class="form-group">
+              <label>Soil Moisture (%)</label>
+              <input type="number" name="Soil_Moisture_pct" value="25" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Nitrogen (kg/ha)</label>
+              <input type="number" name="Nitrogen_kg_ha" value="100" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Phosphorus (kg/ha)</label>
+              <input type="number" name="Phosphorus_kg_ha" value="50" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Potassium (kg/ha)</label>
+              <input type="number" name="Potassium_kg_ha" value="100" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Fertilizer (kg/ha)</label>
+              <input type="number" name="Fertilizer_kg_ha" value="200" step="0.1" required/>
+            </div>
+            <div class="form-group">
+              <label>Pesticide (L/ha)</label>
+              <input type="number" name="Pesticide_Litre_ha" value="5" step="0.01" required/>
+            </div>
+            <div class="form-group">
+              <label>Seed Quality Score</label>
+              <input type="number" name="Seed_Quality_Score" value="0.85" step="0.01" min="0" max="1" required/>
+            </div>
+            <div class="form-group">
+              <label>Water Used (m³)</label>
+              <input type="number" name="Water_Used_m3" value="2000" step="1" required/>
+            </div>
+            <div class="form-group">
+              <label>Disease/Pest Risk (%)</label>
+              <input type="number" name="Disease_Pest_Risk_pct" value="30" step="0.1" required/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Predict Yield</button>
+        </form>
+
+        <!-- Result -->
+        <div id="result-box" class="result-box hidden">
+          <div class="result-label">Predicted Yield</div>
+          <div id="result-value" class="result-value">—</div>
+          <div class="result-unit">Tonnes / Hectare</div>
+          <div id="result-model" class="result-sub"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ANALYTICS SECTION ── -->
+    <section id="analytics" class="section">
+      <h2 class="section-title">📊 Dataset Analytics</h2>
+      <div class="analytics-grid">
+
+        <div class="card">
+          <h3>Yield by Crop</h3>
+          <div class="table-wrap" id="crop-table"></div>
+        </div>
+
+        <div class="card">
+          <h3>Yield by Season</h3>
+          <div class="table-wrap" id="season-table"></div>
+        </div>
+
+        <div class="card full-width">
+          <h3>Top States by Mean Yield</h3>
+          <div class="chart-container">
+            <canvas id="state-chart"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── MODEL METRICS SECTION ── -->
+    <section id="metrics" class="section">
+      <h2 class="section-title">🤖 Model Performance</h2>
+      <div id="metrics-cards" class="metrics-grid"></div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Agricultural Yield Predictor &bull; Powered by Flask &amp; scikit-learn</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

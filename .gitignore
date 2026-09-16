@@ -1,0 +1,32 @@
+# -- Python ------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# -- Virtual environments -----------------------------------
+venv/
+.venv/
+env/
+ENV/
+
+# -- Trained model binaries (too large / regenerated on run) -
+agri_yield_predictor/models/best_model.pkl
+agri_yield_predictor/models/label_encoders.pkl
+
+# -- Generated outputs (reproducible, not needed in repo) --
+agri_yield_predictor/reports/
+agri_yield_predictor/screenshots/
+
+# -- OS / editor -------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# -- Secrets -----------------------------------------------
+.env
+*.env
