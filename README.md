@@ -8,8 +8,8 @@ A full-stack machine learning web app that predicts crop yield (Tonnes/Hectare) 
 
 | Page | URL |
 |------|-----|
-| Prediction UI | `http://localhost:5001/` |
-| Analytics Dashboard | `http://localhost:5001/dashboard` |
+| Prediction UI | `http://localhost:5000/` |
+| Analytics Dashboard | `http://localhost:5000/dashboard` |
 
 ---
 
@@ -64,8 +64,8 @@ python app.py
 ```
 
 ### 5. Open in browser
--Prediction UI: http://127.0.0.1:5001/
--Dashboard: http://127.0.0.1:5001/dashboard
+-Prediction UI: http://127.0.0.1:5000/
+-Dashboard: http://127.0.0.1:5000/dashboard
 
 ---
 
